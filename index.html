@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop</title>
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         * {
             margin: 0;
@@ -117,6 +118,9 @@
             border-radius: 8px;
             padding: 15px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         
         .product-image {
@@ -142,6 +146,17 @@
             font-size: 18px;
             margin: 10px 0;
         }
+
+        /* NEW STYLE FOR DROPDOWN */
+        .product-select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+            cursor: pointer;
+        }
         
         .add-to-cart {
             background: #28a745;
@@ -151,7 +166,7 @@
             border-radius: 5px;
             cursor: pointer;
             width: 100%;
-            margin-top: 10px;
+            margin-top: auto;
         }
         
         .add-to-cart:hover {
@@ -354,30 +369,65 @@
     </div>
 
     <script>
-        // Products - IDs must be in quotes!
+        // --- CONFIGURATION ---
+
         const products = {
             tshirts: [
-                { id: 'VKTD932U44AU6', name: 'Tales From Oblivion T-Shirt', price: 18.00 },
-                { id: '9WKCVCECWDYP6', name: 'Listen T-Shirt', price: 18.00 }
+                // EXAMPLE OF VARIABLE PRODUCT (SIZES)
+                // 1. Give it a unique 'id' (like 'tshirt1') just for our code to track it
+                // 2. Add 'variants' object where Key = Name of Size, Value = Stripe Price ID
+                { 
+                    id: 'tshirt1', 
+                    name: 'Tales From Oblivion T-Shirt', 
+                    price: 18.00,
+                    variants: {
+                        'S': 'price_1Sr5ST2cujdid8XQfUS1TWoC',
+                        'M': 'price_1Sr5T92cujdid8XQ1uRM3EkX',
+                        'L': 'price_1Sr5TX2cujdid8XQNrSBJpG8',
+                        'XL': 'price_1Sr5Tz2cujdid8XQCdlYceSx',
+                        '2XL': 'price_1Sr5UW2cujdid8XQJTua1XvD',
+                        '3XL': 'price_1Sr5Um2cujdid8XQvUCs2483',
+                        '4XL': 'price_1Sr5V42cujdid8XQ2o5EFCse'
+                    }
+                },
+                { 
+                    id: 'tshirt2', 
+                    name: 'Listen T-Shirt', 
+                    price: 18.00,
+                    variants: {
+                        'S': 'price_1Sr29B2cujdid8XQlnBXP01I',
+                        'M': 'price_1Sr3AK2cujdid8XQy5BZ9qQx',
+                        'L': 'price_1Sr3BG2cujdid8XQAQPipJuY',
+                        'XL': 'price_1Sr3Bi2cujdid8XQ6eE4Vv04',
+                        '2XL': 'price_1Sr5UW2cujdid8XQJTua1XvD',
+                        '3XL': 'price_1Sr3Db2cujdid8XQVOJKnXGI',
+                        '4XL': 'price_1Sr3Eq2cujdid8XQSsN7EDns'
+
+                    }
+                }
             ],
+            // EXAMPLE OF SIMPLE PRODUCT (NO SIZES)
+            // Just use the Stripe Price ID as the 'id'
             posters: [
-                { id: 'AHLK9DWFNWMLS', name: 'Tales From Oblivion Poster', price: 7.50 },
-                { id: 'UTP8PJW7TMV8Q', name: 'House of the Lost Poster', price: 7.50 },
-                { id: '9B6HPMLZSW7LE', name: 'Irish Ghost Stories Poster', price: 7.50 }
+                { id: 'price_1Sr4Pc2cujdid8XQrSPtZkxD', name: 'Tales From Oblivion Poster', price: 7.50 },
+                { id: 'price_1Sr4Ox2cujdid8XQPLDZef5y', name: 'House of the Lost Poster', price: 7.50 },
+                { id: 'price_1Sr4OB2cujdid8XQlrV8l3w8', name: 'Irish Ghost Stories Poster', price: 7.50 }
             ],
             badges: [
-                { id: 'VJDRDA4MVNVAA', name: 'Tales From Oblivion Badge', price: 3.00 }
+                { id: 'price_1Sr4Qs2cujdid8XQznCkzpvh', name: 'Tales From Oblivion Badge', price: 3.00 }
             ],
             stickers: [
-                { id: '6P7HX8EMDRTHW', name: 'Tales From Oblivion Sticker', price: 2.50 }
+                { id: 'price_1Sr4SP2cujdid8XQJ8pMxVZa', name: 'Tales From Oblivion Sticker', price: 2.50 }
             ],
             booklets: [
-                { id: 'EU6E4XFE7WN8Q', name: 'Tales From Oblivion Graphic Booklet', price: 5.00 }
+                { id: 'price_1Sr4T52cujdid8XQol6iAsRk', name: 'Tales From Oblivion Graphic Booklet', price: 5.00 }
             ],
             bundles: [
-                { id: 'ZQ59UXW5CLEJ8', name: 'Tales From Oblivion Bundle', price: 15.00 }
+                { id: 'price_1Sr4nb2cujdid8XQTYUzcxw1', name: 'Tales From Oblivion Bundle', price: 15.00 }
             ]
         };
+
+        // --- END CONFIGURATION ---
 
         let cart = [];
 
@@ -387,10 +437,22 @@
                 products[category].forEach(product => {
                     const card = document.createElement('div');
                     card.className = 'product-card';
+                    
+                    // Check if product has variants (sizes)
+                    let inputHtml = '';
+                    if (product.variants) {
+                        inputHtml = `<select id="select-${product.id}" class="product-select">`;
+                        for (let size in product.variants) {
+                            inputHtml += `<option value="${product.variants[size]}">${size}</option>`;
+                        }
+                        inputHtml += `</select>`;
+                    }
+
                     card.innerHTML = `
                         <div class="product-image">Product Image</div>
                         <div class="product-name">${product.name}</div>
                         <div class="product-price">£${product.price.toFixed(2)}</div>
+                        ${inputHtml}
                         <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to Cart</button>
                     `;
                     grid.appendChild(card);
@@ -406,20 +468,40 @@
         }
 
         function addToCart(productId) {
+            // 1. Find the product object in our database
             let product = null;
             for (let category in products) {
                 product = products[category].find(p => p.id === productId);
                 if (product) break;
             }
+
+            // 2. Determine exact ID and Name based on variant selection
+            let finalId = product.id;
+            let finalName = product.name;
             
-            const existingItem = cart.find(item => item.id === productId);
+            if (product.variants) {
+                // If it has variants, get the selected Stripe ID from the dropdown
+                const selectElement = document.getElementById(`select-${productId}`);
+                finalId = selectElement.value; // This is the Stripe Price ID
+                const sizeName = selectElement.options[selectElement.selectedIndex].text;
+                finalName = `${product.name} (${sizeName})`;
+            }
+
+            // 3. Add to Cart Logic
+            const existingItem = cart.find(item => item.id === finalId);
             if (existingItem) {
                 existingItem.quantity++;
             } else {
-                cart.push({ ...product, quantity: 1 });
+                cart.push({ 
+                    id: finalId, // For Stripe
+                    name: finalName, // For Display + PayPal
+                    price: product.price,
+                    quantity: 1 
+                });
             }
             
             updateCart();
+            toggleCart(); // Optional: Opens cart immediately when adding
         }
 
         function removeFromCart(productId) {
@@ -498,8 +580,32 @@
             document.body.removeChild(form);
         }
 
-        function checkoutStripe() {
-            alert('Stripe checkout - Connect your Stripe button here!\n\nYou can replace this with your actual Stripe integration.');
+        async function checkoutStripe() {
+            // REPLACE THIS KEY
+            const stripePublicKey = 'pk_live_51SqZpe2cujdid8XQr1KXAM7gMIx9o8aJdJKhYBKFX2ZbdvjwanhWiDMlBPAI7QgnhaCaFXgBCsKteCPGvpMTMlOX00TtExXBqD'; 
+            
+            // REPLACE THESE URLS
+            const successUrl = 'https://sites.google.com/view/urban-arts-centre/success';
+            const cancelUrl = 'https://sites.google.com/view/urban-arts-centre/shop';
+
+            const stripe = Stripe(stripePublicKey);
+
+            const lineItems = cart.map(item => ({
+                price: item.id, 
+                quantity: item.quantity
+            }));
+
+            const { error } = await stripe.redirectToCheckout({
+                mode: 'payment',
+                lineItems: lineItems,
+                successUrl: successUrl,
+                cancelUrl: cancelUrl,
+            });
+
+            if (error) {
+                console.error('Stripe error:', error);
+                alert('Stripe Error: ' + error.message);
+            }
         }
 
         loadProducts();
