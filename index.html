@@ -354,28 +354,28 @@
     </div>
 
     <script>
-        // Sample products - REPLACE WITH YOUR ACTUAL PRODUCTS
+        // Products - IDs must be in quotes!
         const products = {
             tshirts: [
-                { id: VKTD932U44AU6, name: 'Tales From Oblivion T-Shirt', price: 18.00 },
-                { id: 9WKCVCECWDYP6, name: 'Listen T-Shirt', price: 18.00 }
+                { id: 'VKTD932U44AU6', name: 'Tales From Oblivion T-Shirt', price: 18.00 },
+                { id: '9WKCVCECWDYP6', name: 'Listen T-Shirt', price: 18.00 }
             ],
             posters: [
-                { id: AHLK9DWFNWMLS, name: 'Tales From Oblivion Poster', price: 7.50 },
-                { id: UTP8PJW7TMV8Q, name: 'House of the Lost Poster', price: 7.50 },
-                { id: 9B6HPMLZSW7LE, name: 'Irish Ghost Stories Poster', price: 7.50 }
+                { id: 'AHLK9DWFNWMLS', name: 'Tales From Oblivion Poster', price: 7.50 },
+                { id: 'UTP8PJW7TMV8Q', name: 'House of the Lost Poster', price: 7.50 },
+                { id: '9B6HPMLZSW7LE', name: 'Irish Ghost Stories Poster', price: 7.50 }
             ],
             badges: [
-                { id: VJDRDA4MVNVAA, name: 'Tales From Oblivion Badge', price: 3.00 },
+                { id: 'VJDRDA4MVNVAA', name: 'Tales From Oblivion Badge', price: 3.00 }
             ],
             stickers: [
-                { id: 6P7HX8EMDRTHW, name: 'Tales From Oblivion Sticker', price: 2.50 },
+                { id: '6P7HX8EMDRTHW', name: 'Tales From Oblivion Sticker', price: 2.50 }
             ],
-            graphic booklets: [
-                { id: EU6E4XFE7WN8Q, name: 'Tales From Oblivion Graphic Booklet', price: 5.00 },
+            booklets: [
+                { id: 'EU6E4XFE7WN8Q', name: 'Tales From Oblivion Graphic Booklet', price: 5.00 }
             ],
             bundles: [
-                { id: ZQ59UXW5CLEJ8, name: 'Tales From Oblivion Bundle', price: 15.00 },
+                { id: 'ZQ59UXW5CLEJ8', name: 'Tales From Oblivion Bundle', price: 15.00 }
             ]
         };
 
@@ -390,8 +390,8 @@
                     card.innerHTML = `
                         <div class="product-image">Product Image</div>
                         <div class="product-name">${product.name}</div>
-                        <div class="product-price">$${product.price.toFixed(2)}</div>
-                        <button class="add-to-cart" onclick="addToCart(${product.id})">Add to Cart</button>
+                        <div class="product-price">£${product.price.toFixed(2)}</div>
+                        <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to Cart</button>
                     `;
                     grid.appendChild(card);
                 });
@@ -445,17 +445,17 @@
                 <div class="cart-item">
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.name}</div>
-                        <div>Quantity: ${item.quantity} × $${item.price.toFixed(2)}</div>
+                        <div>Quantity: ${item.quantity} × £${item.price.toFixed(2)}</div>
                     </div>
                     <div>
-                        <strong>$${(item.price * item.quantity).toFixed(2)}</strong>
-                        <button class="remove-item" onclick="removeFromCart(${item.id})">Remove</button>
+                        <strong>£${(item.price * item.quantity).toFixed(2)}</strong>
+                        <button class="remove-item" onclick="removeFromCart('${item.id}')">Remove</button>
                     </div>
                 </div>
             `).join('');
             
             const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            cartTotal.innerHTML = `Total: $${total.toFixed(2)}`;
+            cartTotal.innerHTML = `Total: £${total.toFixed(2)}`;
         }
 
         function toggleCart() {
@@ -464,24 +464,20 @@
         }
 
         function checkoutPayPal() {
-            // REPLACE 'your-email@paypal.com' with your actual PayPal email
             const paypalEmail = 'tedelston1@gmail.com';
             
-            // Create a form for PayPal cart
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'https://www.paypal.com/cgi-bin/webscr';
             form.target = '_blank';
             
-            // Add PayPal fields
             const fields = {
                 'cmd': '_cart',
                 'upload': '1',
                 'business': paypalEmail,
-                'currency_code': 'GBP' // Change if you use different currency
+                'currency_code': 'GBP'
             };
             
-            // Add each cart item
             cart.forEach((item, index) => {
                 const num = index + 1;
                 fields[`item_name_${num}`] = item.name;
@@ -489,7 +485,6 @@
                 fields[`quantity_${num}`] = item.quantity;
             });
             
-            // Create hidden input fields
             for (let key in fields) {
                 const input = document.createElement('input');
                 input.type = 'hidden';
@@ -498,7 +493,6 @@
                 form.appendChild(input);
             }
             
-            // Submit the form
             document.body.appendChild(form);
             form.submit();
             document.body.removeChild(form);
