@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .cart-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #404040;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .cart-button:hover {
+            background: #262626;
+        }
+        
+        .cart-count {
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            margin-left: 8px;
+            font-size: 14px;
+        }
+        
+        .category {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .category-header {
+            background: #404040;
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        
+        .category-header:hover {
+            background: #262626;
+        }
+        
+        .category-header h2 {
+            font-size: 20px;
+        }
+        
+        .arrow {
+            transition: transform 0.3s;
+        }
+        
+        .arrow.open {
+            transform: rotate(180deg);
+        }
+        
+        .category-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #f9f9f9;
+        }
+        
+        .category-content.open {
+            max-height: 2000px;
+            padding: 20px;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        .product-name {
+            font-weight: bold;
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        .product-price {
+            color: #262626;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        
+        .add-to-cart {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .add-to-cart:hover {
+            background: #218838;
+        }
+        
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        
+        .cart-modal.open {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cart-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        .close-cart {
+            background: none;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .cart-item-info {
+            flex: 1;
+        }
+        
+        .cart-item-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .remove-item {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .cart-total {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .payment-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .payment-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .paypal-btn {
+            background: #0070ba;
+            color: white;
+        }
+        
+        .stripe-btn {
+            background: #635bff;
+            color: white;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <button class="cart-button" onclick="toggleCart()">
+        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+    </button>
+
+    <div class="container">
+        <h1>Merch Shop</h1>
+        
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory('tshirts')">
+                <h2>T-Shirts</h2>
+                <span class="arrow" id="arrow-tshirts">▼</span>
+            </div>
+            <div class="category-content" id="tshirts">
+                <div class="product-grid" id="tshirts-grid"></div>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory('posters')">
+                <h2>Posters</h2>
+                <span class="arrow" id="arrow-posters">▼</span>
+            </div>
+            <div class="category-content" id="posters">
+                <div class="product-grid" id="posters-grid"></div>
+            </div>
+        </div>
+        
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory('badges')">
+                <h2>Badges</h2>
+                <span class="arrow" id="arrow-badges">▼</span>
+            </div>
+            <div class="category-content" id="badges">
+                <div class="product-grid" id="badges-grid"></div>
+            </div>
+        </div>
+        
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory('stickers')">
+                <h2>Stickers</h2>
+                <span class="arrow" id="arrow-stickers">▼</span>
+            </div>
+            <div class="category-content" id="stickers">
+                <div class="product-grid" id="stickers-grid"></div>
+            </div>
+        </div>
+        
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory('booklets')">
+                <h2>Graphic Booklets</h2>
+                <span class="arrow" id="arrow-booklets">▼</span>
+            </div>
+            <div class="category-content" id="booklets">
+                <div class="product-grid" id="booklets-grid"></div>
+            </div>
+        </div>
+        
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory('bundles')">
+                <h2>Bundles</h2>
+                <span class="arrow" id="arrow-bundles">▼</span>
+            </div>
+            <div class="category-content" id="bundles">
+                <div class="product-grid" id="bundles-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>Shopping Cart</h2>
+                <button class="close-cart" onclick="toggleCart()">×</button>
+            </div>
+            <div id="cartItems"></div>
+            <div class="cart-total" id="cartTotal"></div>
+            <div class="payment-buttons">
+                <button class="payment-btn paypal-btn" onclick="checkoutPayPal()">Pay with PayPal</button>
+                <button class="payment-btn stripe-btn" onclick="checkoutStripe()">Pay with Stripe</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample products - REPLACE WITH YOUR ACTUAL PRODUCTS
+        const products = {
+            tshirts: [
+                { id: VKTD932U44AU6, name: 'Tales From Oblivion T-Shirt', price: 18.00 },
+                { id: 9WKCVCECWDYP6, name: 'Listen T-Shirt', price: 18.00 }
+            ],
+            posters: [
+                { id: AHLK9DWFNWMLS, name: 'Tales From Oblivion Poster', price: 7.50 },
+                { id: UTP8PJW7TMV8Q, name: 'House of the Lost Poster', price: 7.50 },
+                { id: 9B6HPMLZSW7LE, name: 'Irish Ghost Stories Poster', price: 7.50 }
+            ],
+            badges: [
+                { id: VJDRDA4MVNVAA, name: 'Tales From Oblivion Badge', price: 3.00 },
+            ],
+            stickers: [
+                { id: 6P7HX8EMDRTHW, name: 'Tales From Oblivion Sticker', price: 2.50 },
+            ],
+            graphic booklets: [
+                { id: EU6E4XFE7WN8Q, name: 'Tales From Oblivion Graphic Booklet', price: 5.00 },
+            ],
+            bundles: [
+                { id: ZQ59UXW5CLEJ8, name: 'Tales From Oblivion Bundle', price: 15.00 },
+            ]
+        };
+
+        let cart = [];
+
+        function loadProducts() {
+            for (let category in products) {
+                const grid = document.getElementById(category + '-grid');
+                products[category].forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <div class="product-image">Product Image</div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">$${product.price.toFixed(2)}</div>
+                        <button class="add-to-cart" onclick="addToCart(${product.id})">Add to Cart</button>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        function toggleCategory(categoryId) {
+            const content = document.getElementById(categoryId);
+            const arrow = document.getElementById('arrow-' + categoryId);
+            content.classList.toggle('open');
+            arrow.classList.toggle('open');
+        }
+
+        function addToCart(productId) {
+            let product = null;
+            for (let category in products) {
+                product = products[category].find(p => p.id === productId);
+                if (product) break;
+            }
+            
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            
+            updateCart();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartCount = document.getElementById('cartCount');
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = totalItems;
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
+                cartTotal.innerHTML = '';
+                return;
+            }
+            
+            cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div>Quantity: ${item.quantity} × $${item.price.toFixed(2)}</div>
+                    </div>
+                    <div>
+                        <strong>$${(item.price * item.quantity).toFixed(2)}</strong>
+                        <button class="remove-item" onclick="removeFromCart(${item.id})">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            cartTotal.innerHTML = `Total: $${total.toFixed(2)}`;
+        }
+
+        function toggleCart() {
+            const modal = document.getElementById('cartModal');
+            modal.classList.toggle('open');
+        }
+
+        function checkoutPayPal() {
+            // REPLACE 'your-email@paypal.com' with your actual PayPal email
+            const paypalEmail = 'tedelston1@gmail.com';
+            
+            // Create a form for PayPal cart
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://www.paypal.com/cgi-bin/webscr';
+            form.target = '_blank';
+            
+            // Add PayPal fields
+            const fields = {
+                'cmd': '_cart',
+                'upload': '1',
+                'business': paypalEmail,
+                'currency_code': 'GBP' // Change if you use different currency
+            };
+            
+            // Add each cart item
+            cart.forEach((item, index) => {
+                const num = index + 1;
+                fields[`item_name_${num}`] = item.name;
+                fields[`amount_${num}`] = item.price.toFixed(2);
+                fields[`quantity_${num}`] = item.quantity;
+            });
+            
+            // Create hidden input fields
+            for (let key in fields) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                form.appendChild(input);
+            }
+            
+            // Submit the form
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function checkoutStripe() {
+            alert('Stripe checkout - Connect your Stripe button here!\n\nYou can replace this with your actual Stripe integration.');
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
