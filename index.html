@@ -4,460 +4,252 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop</title>
-    <script src="https://js.stripe.com/v3/"></script>
+    
+    <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.css" />
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { text-align: center; margin-bottom: 30px; color: #333; }
         
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f5f5f5;
-        }
+        /* Category Styles */
+        .category { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; }
+        .category-header { background: #404040; color: white; padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
+        .category-header:hover { background: #262626; }
+        .category-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; background: #f9f9f9; }
+        .category-content.open { max-height: 2000px; padding: 20px; }
+        .arrow { transition: transform 0.3s; }
+        .arrow.open { transform: rotate(180deg); }
+
+        /* Grid */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .product-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
+        /* UPDATED IMAGE STYLES */
+        .product-image { 
+            width: 100%; 
+            height: 200px; 
+            object-fit: contain; /* This ensures the image isn't stretched/squashed */
+            margin-bottom: 15px;
+            border-radius: 5px;
         }
+
+        .product-name { font-weight: bold; margin: 10px 0; color: #333; }
+        .product-price { color: #262626; font-size: 18px; margin: 10px 0; }
         
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
+        /* Dropdown */
+        .product-select { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; cursor: pointer; }
+        
+        /* Snipcart Button Styles */
+        .snipcart-add-item { 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: auto; 
+            font-size: 16px; 
+            font-weight: bold; 
+            transition: background 0.2s, transform 0.1s;
         }
-        
-        .cart-button {
+        .snipcart-add-item:hover { background: #218838; }
+        .snipcart-add-item:active { transform: scale(0.98); }
+
+        /* Added State (Green) */
+        .snipcart-add-item.added {
+            background: #155724;
+        }
+
+        /* Floating Cart Button */
+        .header-cart {
             position: fixed;
             top: 20px;
             right: 20px;
             background: #404040;
             color: white;
-            border: none;
             padding: 12px 24px;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             z-index: 1000;
+            border: none;
+            transition: transform 0.2s;
         }
+        .header-cart:hover { background: #262626; }
         
-        .cart-button:hover {
-            background: #262626;
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
         }
-        
-        .cart-count {
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 8px;
-            margin-left: 8px;
-            font-size: 14px;
-        }
-        
-        .category {
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        
-        .category-header {
-            background: #404040;
-            color: white;
-            padding: 15px 20px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.3s;
-        }
-        
-        .category-header:hover {
-            background: #262626;
-        }
-        
-        .category-header h2 {
-            font-size: 20px;
-        }
-        
-        .arrow {
-            transition: transform 0.3s;
-        }
-        
-        .arrow.open {
-            transform: rotate(180deg);
-        }
-        
-        .category-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            background: #f9f9f9;
-        }
-        
-        .category-content.open {
-            max-height: 2000px;
-            padding: 20px;
-        }
-        
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        .product-card {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        
-        .product-image {
-            width: 100%;
-            height: 200px;
-            background: #e0e0e0;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-        }
-        
-        .product-name {
-            font-weight: bold;
-            margin: 10px 0;
-            color: #333;
-        }
-        
-        .product-price {
-            color: #262626;
-            font-size: 18px;
-            margin: 10px 0;
-        }
-
-        /* NEW STYLE FOR DROPDOWN */
-        .product-select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background: #fff;
-            cursor: pointer;
-        }
-        
-        .add-to-cart {
+        .header-cart.shake {
+            animation: shake 0.4s ease-in-out;
             background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: auto;
-        }
-        
-        .add-to-cart:hover {
-            background: #218838;
-        }
-        
-        .cart-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-        }
-        
-        .cart-modal.open {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .cart-content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .cart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 10px;
-        }
-        
-        .close-cart {
-            background: none;
-            border: none;
-            font-size: 30px;
-            cursor: pointer;
-            color: #666;
-        }
-        
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .cart-item-info {
-            flex: 1;
-        }
-        
-        .cart-item-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .remove-item {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 3px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        
-        .cart-total {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 20px;
-            text-align: right;
-        }
-        
-        .payment-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .payment-btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .paypal-btn {
-            background: #0070ba;
-            color: white;
-        }
-        
-        .stripe-btn {
-            background: #635bff;
-            color: white;
-        }
-        
-        .empty-cart {
-            text-align: center;
-            padding: 40px;
-            color: #999;
         }
     </style>
 </head>
 <body>
-    <button class="cart-button" onclick="toggleCart()">
-        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+
+    <button class="header-cart snipcart-checkout" id="cartButton">
+        🛒 Cart (<span class="snipcart-items-count">0</span>)
     </button>
 
     <div class="container">
-        <h1>Merch Shop</h1>
+        <h1>Urban Arts Centre Merchandise Store</h1>
         
         <div class="category">
             <div class="category-header" onclick="toggleCategory('tshirts')">
-                <h2>T-Shirts</h2>
-                <span class="arrow" id="arrow-tshirts">▼</span>
+                <h2>T-Shirts</h2><span class="arrow" id="arrow-tshirts">▼</span>
             </div>
-            <div class="category-content" id="tshirts">
-                <div class="product-grid" id="tshirts-grid"></div>
-            </div>
+            <div class="category-content" id="tshirts"><div class="product-grid" id="tshirts-grid"></div></div>
         </div>
-
         <div class="category">
             <div class="category-header" onclick="toggleCategory('posters')">
-                <h2>Posters</h2>
-                <span class="arrow" id="arrow-posters">▼</span>
+                <h2>Posters</h2><span class="arrow" id="arrow-posters">▼</span>
             </div>
-            <div class="category-content" id="posters">
-                <div class="product-grid" id="posters-grid"></div>
-            </div>
+            <div class="category-content" id="posters"><div class="product-grid" id="posters-grid"></div></div>
         </div>
-        
         <div class="category">
             <div class="category-header" onclick="toggleCategory('badges')">
-                <h2>Badges</h2>
-                <span class="arrow" id="arrow-badges">▼</span>
+                <h2>Badges</h2><span class="arrow" id="arrow-badges">▼</span>
             </div>
-            <div class="category-content" id="badges">
-                <div class="product-grid" id="badges-grid"></div>
-            </div>
+            <div class="category-content" id="badges"><div class="product-grid" id="badges-grid"></div></div>
         </div>
-        
         <div class="category">
             <div class="category-header" onclick="toggleCategory('stickers')">
-                <h2>Stickers</h2>
-                <span class="arrow" id="arrow-stickers">▼</span>
+                <h2>Stickers</h2><span class="arrow" id="arrow-stickers">▼</span>
             </div>
-            <div class="category-content" id="stickers">
-                <div class="product-grid" id="stickers-grid"></div>
-            </div>
+            <div class="category-content" id="stickers"><div class="product-grid" id="stickers-grid"></div></div>
         </div>
-        
         <div class="category">
             <div class="category-header" onclick="toggleCategory('booklets')">
-                <h2>Graphic Booklets</h2>
-                <span class="arrow" id="arrow-booklets">▼</span>
+                <h2>Graphic Booklets</h2><span class="arrow" id="arrow-booklets">▼</span>
             </div>
-            <div class="category-content" id="booklets">
-                <div class="product-grid" id="booklets-grid"></div>
-            </div>
+            <div class="category-content" id="booklets"><div class="product-grid" id="booklets-grid"></div></div>
         </div>
-        
         <div class="category">
             <div class="category-header" onclick="toggleCategory('bundles')">
-                <h2>Bundles</h2>
-                <span class="arrow" id="arrow-bundles">▼</span>
+                <h2>Bundles</h2><span class="arrow" id="arrow-bundles">▼</span>
             </div>
-            <div class="category-content" id="bundles">
-                <div class="product-grid" id="bundles-grid"></div>
-            </div>
+            <div class="category-content" id="bundles"><div class="product-grid" id="bundles-grid"></div></div>
         </div>
     </div>
 
-    <div class="cart-modal" id="cartModal">
-        <div class="cart-content">
-            <div class="cart-header">
-                <h2>Shopping Cart</h2>
-                <button class="close-cart" onclick="toggleCart()">×</button>
-            </div>
-            <div id="cartItems"></div>
-            <div class="cart-total" id="cartTotal"></div>
-            <div class="payment-buttons">
-                <button class="payment-btn paypal-btn" onclick="checkoutPayPal()">Pay with PayPal</button>
-                <button class="payment-btn stripe-btn" onclick="checkoutStripe()">Pay with Stripe</button>
-            </div>
-        </div>
+    <script async src="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js"></script>
+    
+    <div hidden id="snipcart" 
+         data-api-key="MzAzZThmZDItMTgwZi00YzE3LWE4YmYtYzUzZmQ3YjgwMGI1NjM5MDQ0Mzg5OTYwMzUyMDcw"
+         data-config-add-product-behavior="none"
+         data-config-modal-style="side">
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-
+        // CONFIGURATION
+        // NOTE: Replace the image URLs with your real links
         const products = {
             tshirts: [
-                // EXAMPLE OF VARIABLE PRODUCT (SIZES)
-                // 1. Give it a unique 'id' (like 'tshirt1') just for our code to track it
-                // 2. Add 'variants' object where Key = Name of Size, Value = Stripe Price ID
                 { 
                     id: 'tshirt1', 
                     name: 'Tales From Oblivion T-Shirt', 
                     price: 18.00,
-                    variants: {
-                        'S': 'price_1Sr5ST2cujdid8XQfUS1TWoC',
-                        'M': 'price_1Sr5T92cujdid8XQ1uRM3EkX',
-                        'L': 'price_1Sr5TX2cujdid8XQNrSBJpG8',
-                        'XL': 'price_1Sr5Tz2cujdid8XQCdlYceSx',
-                        '2XL': 'price_1Sr5UW2cujdid8XQJTua1XvD',
-                        '3XL': 'price_1Sr5Um2cujdid8XQvUCs2483',
-                        '4XL': 'price_1Sr5V42cujdid8XQ2o5EFCse'
-                    }
+                    image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/TFO%20T-Shirt.png', // REPLACE THIS
+                    sizes: 'Small|Medium|Large|XL|2XL|3XL|4XL' 
                 },
                 { 
                     id: 'tshirt2', 
                     name: 'Listen T-Shirt', 
-                    price: 18.00,
-                    variants: {
-                        'S': 'price_1Sr29B2cujdid8XQlnBXP01I',
-                        'M': 'price_1Sr3AK2cujdid8XQy5BZ9qQx',
-                        'L': 'price_1Sr3BG2cujdid8XQAQPipJuY',
-                        'XL': 'price_1Sr3Bi2cujdid8XQ6eE4Vv04',
-                        '2XL': 'price_1Sr5UW2cujdid8XQJTua1XvD',
-                        '3XL': 'price_1Sr3Db2cujdid8XQVOJKnXGI',
-                        '4XL': 'price_1Sr3Eq2cujdid8XQSsN7EDns'
-
-                    }
+                    price: 18.00, 
+                    image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/Listen%20T-Shirt.png', // REPLACE THIS
+                    sizes: 'Small|Medium|Large|XL|2XL|3XL|4XL'
                 }
             ],
-            // EXAMPLE OF SIMPLE PRODUCT (NO SIZES)
-            // Just use the Stripe Price ID as the 'id'
             posters: [
-                { id: 'price_1Sr4Pc2cujdid8XQrSPtZkxD', name: 'Tales From Oblivion Poster', price: 7.50 },
-                { id: 'price_1Sr4Ox2cujdid8XQPLDZef5y', name: 'House of the Lost Poster', price: 7.50 },
-                { id: 'price_1Sr4OB2cujdid8XQlrV8l3w8', name: 'Irish Ghost Stories Poster', price: 7.50 }
+                { id: 'poster1', name: 'Tales From Oblivion Poster', price: 7.50, image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/tfo%20poster.png' },
+                { id: 'poster2', name: 'House of the Lost Poster', price: 7.50, image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/HOL%20POSTER.png' },
+                { id: 'poster3', name: 'Irish Ghost Stories Poster', price: 7.50, image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/IGS%20Poster.png' }
             ],
             badges: [
-                { id: 'price_1Sr4Qs2cujdid8XQznCkzpvh', name: 'Tales From Oblivion Badge', price: 3.00 }
+                { id: 'badge1', name: 'Tales From Oblivion Badge', price: 3.00, image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/tfo%20badge.png' }
             ],
             stickers: [
-                { id: 'price_1Sr4SP2cujdid8XQJ8pMxVZa', name: 'Tales From Oblivion Sticker', price: 2.50 }
+                { id: 'sticker1', name: 'Tales From Oblivion Sticker', price: 2.50, image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/tfosticker.png' }
             ],
             booklets: [
-                { id: 'price_1Sr4T52cujdid8XQol6iAsRk', name: 'Tales From Oblivion Graphic Booklet', price: 5.00 }
+                { id: 'booklet1', name: 'Tales From Oblivion Graphic Booklet', price: 5.00, image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/TFO%20Booklet%20cover.png' }
             ],
             bundles: [
-                { id: 'price_1Sr4nb2cujdid8XQTYUzcxw1', name: 'Tales From Oblivion Bundle', price: 15.00 }
+                { id: 'bundle1', name: 'Tales From Oblivion Bundle', price: 15.00, image: 'https://raw.githubusercontent.com/tedelston/uac_merch_shop/refs/heads/main/TFO%20Bundle.png' }
             ]
         };
 
-        // --- END CONFIGURATION ---
-
-        let cart = [];
-
         function loadProducts() {
+            const currentUrl = window.location.href;
+
             for (let category in products) {
                 const grid = document.getElementById(category + '-grid');
                 products[category].forEach(product => {
                     const card = document.createElement('div');
                     card.className = 'product-card';
                     
-                    // Check if product has variants (sizes)
-                    let inputHtml = '';
-                    if (product.variants) {
-                        inputHtml = `<select id="select-${product.id}" class="product-select">`;
-                        for (let size in product.variants) {
-                            inputHtml += `<option value="${product.variants[size]}">${size}</option>`;
-                        }
-                        inputHtml += `</select>`;
+                    let customFields = '';
+                    let sizeSelector = '';
+                    
+                    if (product.sizes) {
+                        const sizeOptions = product.sizes.split('|');
+                        let optionsHtml = sizeOptions.map(s => `<option value="${s}">${s}</option>`).join('');
+                        sizeSelector = `<select class="product-select" onchange="updateSize(this, '${product.id}')">${optionsHtml}</select>`;
+                        
+                        customFields = `
+                            data-item-custom1-name="Size"
+                            data-item-custom1-options="${product.sizes}"
+                            data-item-custom1-value="${sizeOptions[0]}"
+                        `;
                     }
 
+                    // UPDATED: Added referrerpolicy="no-referrer" to the <img> tag
                     card.innerHTML = `
-                        <div class="product-image">Product Image</div>
+                        <img src="${product.image}" alt="${product.name}" class="product-image" referrerpolicy="no-referrer">
                         <div class="product-name">${product.name}</div>
                         <div class="product-price">£${product.price.toFixed(2)}</div>
-                        ${inputHtml}
-                        <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to Cart</button>
+                        ${sizeSelector}
+                        <button class="snipcart-add-item"
+                            id="btn-${product.id}"
+                            onclick="animateButton(this)"
+                            data-item-id="${product.id}"
+                            data-item-price="${product.price}"
+                            data-item-url="${currentUrl}" 
+                            data-item-name="${product.name}"
+                            data-item-image="${product.image}"
+                            ${customFields}>
+                            Add to Cart
+                        </button>
                     `;
                     grid.appendChild(card);
                 });
             }
+        }
+
+        function animateButton(btn) {
+            const originalText = btn.innerText;
+            btn.innerText = "✔ Added";
+            btn.classList.add('added');
+            const cartBtn = document.getElementById('cartButton');
+            cartBtn.classList.add('shake');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('added');
+                cartBtn.classList.remove('shake');
+            }, 2000);
+        }
+
+        function updateSize(selectElement, productId) {
+            const button = document.getElementById('btn-' + productId);
+            button.setAttribute('data-item-custom1-value', selectElement.value);
         }
 
         function toggleCategory(categoryId) {
@@ -466,147 +258,14 @@
             content.classList.toggle('open');
             arrow.classList.toggle('open');
         }
-
-        function addToCart(productId) {
-            // 1. Find the product object in our database
-            let product = null;
-            for (let category in products) {
-                product = products[category].find(p => p.id === productId);
-                if (product) break;
-            }
-
-            // 2. Determine exact ID and Name based on variant selection
-            let finalId = product.id;
-            let finalName = product.name;
-            
-            if (product.variants) {
-                // If it has variants, get the selected Stripe ID from the dropdown
-                const selectElement = document.getElementById(`select-${productId}`);
-                finalId = selectElement.value; // This is the Stripe Price ID
-                const sizeName = selectElement.options[selectElement.selectedIndex].text;
-                finalName = `${product.name} (${sizeName})`;
-            }
-
-            // 3. Add to Cart Logic
-            const existingItem = cart.find(item => item.id === finalId);
-            if (existingItem) {
-                existingItem.quantity++;
-            } else {
-                cart.push({ 
-                    id: finalId, // For Stripe
-                    name: finalName, // For Display + PayPal
-                    price: product.price,
-                    quantity: 1 
-                });
-            }
-            
-            updateCart();
-            toggleCart(); // Optional: Opens cart immediately when adding
-        }
-
-        function removeFromCart(productId) {
-            cart = cart.filter(item => item.id !== productId);
-            updateCart();
-        }
-
-        function updateCart() {
-            const cartCount = document.getElementById('cartCount');
-            const cartItems = document.getElementById('cartItems');
-            const cartTotal = document.getElementById('cartTotal');
-            
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            cartCount.textContent = totalItems;
-            
-            if (cart.length === 0) {
-                cartItems.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
-                cartTotal.innerHTML = '';
-                return;
-            }
-            
-            cartItems.innerHTML = cart.map(item => `
-                <div class="cart-item">
-                    <div class="cart-item-info">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div>Quantity: ${item.quantity} × £${item.price.toFixed(2)}</div>
-                    </div>
-                    <div>
-                        <strong>£${(item.price * item.quantity).toFixed(2)}</strong>
-                        <button class="remove-item" onclick="removeFromCart('${item.id}')">Remove</button>
-                    </div>
-                </div>
-            `).join('');
-            
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            cartTotal.innerHTML = `Total: £${total.toFixed(2)}`;
-        }
-
-        function toggleCart() {
-            const modal = document.getElementById('cartModal');
-            modal.classList.toggle('open');
-        }
-
-        function checkoutPayPal() {
-            const paypalEmail = 'tedelston1@gmail.com';
-            
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'https://www.paypal.com/cgi-bin/webscr';
-            form.target = '_blank';
-            
-            const fields = {
-                'cmd': '_cart',
-                'upload': '1',
-                'business': paypalEmail,
-                'currency_code': 'GBP'
-            };
-            
-            cart.forEach((item, index) => {
-                const num = index + 1;
-                fields[`item_name_${num}`] = item.name;
-                fields[`amount_${num}`] = item.price.toFixed(2);
-                fields[`quantity_${num}`] = item.quantity;
+        
+        document.addEventListener('snipcart.ready', function() {
+            Snipcart.events.on('theme.routechanged', (routesChange) => {
+                if (routesChange.to === "/") {
+                    Snipcart.api.modal.close();
+                }
             });
-            
-            for (let key in fields) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = fields[key];
-                form.appendChild(input);
-            }
-            
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-        }
-
-        async function checkoutStripe() {
-            // REPLACE THIS KEY
-            const stripePublicKey = 'pk_live_51SqZpe2cujdid8XQr1KXAM7gMIx9o8aJdJKhYBKFX2ZbdvjwanhWiDMlBPAI7QgnhaCaFXgBCsKteCPGvpMTMlOX00TtExXBqD'; 
-            
-            // REPLACE THESE URLS
-            const successUrl = 'https://sites.google.com/view/urban-arts-centre/success';
-            const cancelUrl = 'https://sites.google.com/view/urban-arts-centre/shop';
-
-            const stripe = Stripe(stripePublicKey);
-
-            const lineItems = cart.map(item => ({
-                price: item.id, 
-                quantity: item.quantity
-            }));
-
-            const { error } = await stripe.redirectToCheckout({
-                mode: 'payment',
-                lineItems: lineItems,
-                successUrl: successUrl,
-                cancelUrl: cancelUrl,
-            });
-
-            if (error) {
-                console.error('Stripe error:', error);
-                alert('Stripe Error: ' + error.message);
-            }
-        }
+        });
 
         loadProducts();
     </script>
